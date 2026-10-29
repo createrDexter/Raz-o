@@ -1,0 +1,861 @@
+
+/* ========================================
+   CONFIGURAÇÕES GERAIS
+======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #101116;
+    color: #eeeeee;
+    font-family: Arial, sans-serif;
+    padding: 14px 22px;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+button {
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+
+/* ========================================
+   CABEÇALHO NIETZSCHE
+======================================== */
+
+header.niet {
+    width: 100%;
+    min-height: 120px;
+    padding: 8px 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: linear-gradient(
+        110deg,
+        #191919,
+        #30251d,
+        #101010
+    );
+
+    border: 1px solid #705532;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cerebro {
+    width: 115px;
+    height: 100px;
+    flex-shrink: 0;
+}
+
+.cerebro img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.progresso {
+    flex: 1;
+    margin: 0 30px;
+}
+
+.progresso h2 {
+    color: #d4af70;
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+#etapa-atual {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.barra-progresso {
+    width: 100%;
+    max-width: 470px;
+    height: 9px;
+    background: #39312a;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+#barra-preenchida {
+    width: 0%;
+    height: 100%;
+    background: #d4af70;
+    transition: width 0.5s ease;
+}
+
+#porcentagem {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #c4b8a6;
+}
+
+.niet-info {
+    width: 100px;
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.niet-info img {
+    width: 70px;
+    height: 75px;
+    object-fit: contain;
+}
+
+.niet-info h1 {
+    color: #d4af70;
+    font-size: 16px;
+}
+
+
+/* ========================================
+   NAVEGAÇÃO
+======================================== */
+
+.acoes-painel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+}
+
+.btn-voltar,
+.btn-parar {
+    padding: 10px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.btn-voltar {
+    color: #e8c58e;
+    background: #29231d;
+    border: 1px solid #705532;
+}
+
+.btn-voltar:hover {
+    background: #403326;
+}
+
+.btn-parar {
+    color: #ff7777;
+    background: #351919;
+    border: 1px solid #a8433c;
+}
+
+.btn-parar:hover {
+    background: #572020;
+}
+
+.btn-parar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* ========================================
+   CONFIGURAÇÃO DAS PLANILHAS
+======================================== */
+
+.painel-configuracao {
+    width: 100%;
+    padding: 20px;
+
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 25px;
+
+    background: linear-gradient(
+        120deg,
+        #17191e,
+        #111317
+    );
+
+    border: 1px solid #604a30;
+    border-radius: 11px;
+}
+
+.painel-arquivos h2,
+.painel-vigencia h2 {
+    color: #d4af70;
+    font-size: 18px;
+    margin-bottom: 18px;
+}
+
+.painel-vigencia {
+    border-left: 1px solid #393939;
+    padding-left: 25px;
+}
+
+.arquivos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.arquivo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.arquivo label {
+    font-size: 13px;
+    color: #d7d7d7;
+}
+
+.arquivo input[type="file"] {
+    width: 100%;
+    min-width: 0;
+    padding: 9px;
+
+    color: #eeeeee;
+    background: #0e1014;
+
+    border: 1px solid #454545;
+    border-radius: 7px;
+
+    font-size: 12px;
+}
+
+.arquivo input[type="file"]::file-selector-button {
+    padding: 7px 10px;
+    margin-right: 8px;
+
+    background: #292d34;
+    color: white;
+
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+/* ========================================
+   VIGÊNCIA
+======================================== */
+
+.linha-vigencia {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.75fr;
+    gap: 12px;
+}
+
+.campo-vigencia {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.campo-vigencia label {
+    color: #d7d7d7;
+    font-size: 13px;
+}
+
+.campo-vigencia input {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+    padding: 7px;
+
+    background: #0e1014;
+    color: #eeeeee;
+
+    border: 1px solid #454545;
+    border-radius: 7px;
+    font-size: 13px;
+}
+
+.campo-vigencia input:focus {
+    outline: 1px solid #d4af70;
+    border-color: #d4af70;
+}
+
+#btn-vigencia {
+    margin-top: 10px;
+    padding: 10px 18px;
+
+    color: #e8c58e;
+    background: #382c1e;
+
+    border: 1px solid #705532;
+    border-radius: 7px;
+}
+
+#btn-vigencia:hover {
+    background: #51402a;
+}
+
+
+/* ========================================
+   INICIAR COMPARAÇÃO
+======================================== */
+
+.area-iniciar {
+    margin-top: 20px;
+    padding-top: 14px;
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+
+    border-top: 1px solid #303238;
+}
+
+#btn-iniciar {
+    min-width: 210px;
+    padding: 14px 20px;
+
+    background: #d4af70;
+    color: #101010;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#btn-iniciar:hover {
+    background: #e6c184;
+}
+
+#btn-iniciar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#status-comparacao,
+#status-vigencia {
+    color: #c4c4c4;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#status-vigencia {
+    margin-top: 10px;
+}
+
+
+/* ========================================
+   RESULTADOS DA COMPARAÇÃO
+======================================== */
+
+.painel-resultados {
+    width: 100%;
+    margin-top: 18px;
+    padding: 22px 26px;
+
+    background: linear-gradient(
+        120deg,
+        #17191e,
+        #111317
+    );
+
+    border: 1px solid #604a30;
+    border-radius: 11px;
+    overflow: hidden;
+}
+
+.titulo-resultados h2 {
+    font-size: 21px;
+    margin-bottom: 20px;
+}
+
+.mensagem-inicial {
+    color: #999999;
+    font-size: 13px;
+}
+
+
+/* ========================================
+   CARTÕES DE INDICADORES
+======================================== */
+
+.resumo-comparacao {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 25px;
+}
+
+.resultado-card {
+    min-width: 0;
+    min-height: 90px;
+    padding: 15px;
+
+    background: #11151b;
+    border: 1px solid #705532;
+    border-radius: 9px;
+}
+
+.resultado-card h3 {
+    color: #e0b66f;
+    font-size: 27px;
+    margin-bottom: 7px;
+}
+
+.resultado-card p {
+    color: #d1d1d1;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* ========================================
+   TÍTULOS E LISTAS DE RESULTADOS
+======================================== */
+
+.painel-resultados h3 {
+    color: #e0b66f;
+    font-size: 16px;
+    margin: 20px 0 12px;
+}
+
+.lista-resultados {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lista-resultados li {
+    padding: 13px 15px;
+
+    background: #11151b;
+    border: 1px solid #30343c;
+    border-radius: 7px;
+}
+
+.lista-resultados li strong {
+    display: block;
+    color: #e0b66f;
+    margin-bottom: 7px;
+}
+
+.lista-resultados li p {
+    color: #c7c7c7;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+
+/* ========================================
+   TABELAS - PRÓXIMA ETAPA
+======================================== */
+
+.tabela-resultados {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.tabela-resultados th {
+    padding: 13px;
+    text-align: left;
+    color: #c4c8d0;
+    background: #20232a;
+    border: 1px solid #343840;
+}
+
+.tabela-resultados td {
+    padding: 12px;
+    border: 1px solid #30343c;
+}
+
+.tabela-resultados tr:hover td {
+    background: #1b2027;
+}
+
+
+/* ========================================
+   MENU DA PÁGINA INICIAL
+======================================== */
+
+.menu {
+    width: 100%;
+    height: 150px;
+    margin-bottom: 20px;
+    padding: 10px 30px;
+
+    display: flex;
+    align-items: center;
+
+    background: linear-gradient(100deg, #24201d, #111111);
+    border: 1px solid #66513b;
+    border-radius: 12px;
+}
+
+.menu-logo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.menu-logo img {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+}
+
+.menu-logo h1 {
+    color: #eeeeee;
+    font-size: 42px;
+    letter-spacing: 3px;
+}
+
+.menu-pensadores {
+    width: 100%;
+    padding: 0 10px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.pensador {
+    position: relative;
+    width: 420px;
+    max-width: 100%;
+    height: 120px;
+    padding-right: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+
+    background: linear-gradient(90deg, #181818, #242424 70%, #383838);
+    border: 1px solid #414141;
+    border-radius: 8px;
+    overflow: hidden;
+
+    transition: 0.2s ease;
+}
+
+.pensador:hover {
+    transform: translateY(-2px);
+    border-color: #777777;
+}
+
+.pensador-imagem {
+    width: 120px;
+    height: 120px;
+    flex: 0 0 120px;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+
+    overflow: hidden;
+}
+
+.pensador-imagem img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: bottom center;
+}
+
+.pensador h2 {
+    font-size: 24px;
+}
+
+.pensador a {
+    color: #eeeeee;
+    text-decoration: none;
+}
+
+.pensador a:hover {
+    color: #bdbdbd;
+}
+
+
+/* ========================================
+   RESPONSIVIDADE
+======================================== */
+
+@media (max-width: 1000px) {
+
+    .painel-configuracao {
+        grid-template-columns: 1fr;
+    }
+
+    .painel-vigencia {
+        border-left: none;
+        border-top: 1px solid #393939;
+        padding: 20px 0 0;
+    }
+
+    .resumo-comparacao {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+
+    body {
+        padding: 10px;
+    }
+
+    header.niet {
+        min-height: 100px;
+        padding: 8px;
+    }
+
+    .cerebro {
+        width: 65px;
+        height: 75px;
+    }
+
+    .progresso {
+        margin: 0 10px;
+    }
+
+    .progresso h2 {
+        font-size: 15px;
+    }
+
+    .niet-info {
+        width: 60px;
+    }
+
+    .niet-info img {
+        width: 50px;
+        height: 55px;
+    }
+
+    .niet-info h1 {
+        font-size: 12px;
+    }
+
+    .arquivos {
+        grid-template-columns: 1fr;
+    }
+
+    .linha-vigencia {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .resumo-comparacao {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .painel-resultados {
+        padding: 15px;
+    }
+
+    .area-iniciar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #btn-iniciar {
+        width: 100%;
+    }
+
+    .tabela-resultados {
+        min-width: 650px;
+    }
+}
+
+/* ========================================
+   NAVEGAÇÃO DAS ABAS DE RESULTADOS
+======================================== */
+
+.abas-resultados {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+
+    margin-top: 25px;
+    margin-bottom: 18px;
+
+    border-bottom: 1px solid #39342d;
+    overflow-x: auto;
+}
+
+.aba-resultado {
+    flex-shrink: 0;
+    padding: 13px 2px;
+
+    background: transparent;
+    color: #d5d5d5;
+
+    border: none;
+    border-bottom: 3px solid transparent;
+
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    transition: 0.2s ease;
+}
+
+.aba-resultado:hover {
+    color: #e2b86f;
+}
+
+.aba-resultado.ativa {
+    color: #e2b86f;
+    border-bottom-color: #d4af70;
+    font-weight: bold;
+}
+
+.aba-resultado:focus-visible {
+    outline: 1px solid #d4af70;
+    outline-offset: 3px;
+}
+
+
+/* ========================================
+   CONTEÚDO DAS ABAS
+======================================== */
+
+#conteudo-abas-resultados {
+    width: 100%;
+    min-height: 150px;
+    padding-bottom: 15px;
+}
+
+#conteudo-abas-resultados h3 {
+    color: #e0b66f;
+    font-size: 17px;
+    margin: 18px 0 12px;
+}
+
+.quantidade-resultados {
+    color: #a9a9a9;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.resultado-vazio,
+.mensagem-previa {
+    padding: 18px 10px;
+    color: #bdbdbd;
+    font-size: 13px;
+}
+
+
+/* ========================================
+   TABELA DE RESULTADOS
+======================================== */
+
+.tabela-resultados-container {
+    width: 100%;
+    max-height: 480px;
+
+    overflow: auto;
+
+    border: 1px solid #343840;
+    border-radius: 8px;
+}
+
+.tabela-resultados {
+    width: 100%;
+    min-width: 650px;
+
+    border-collapse: collapse;
+    text-align: left;
+
+    font-size: 13px;
+}
+
+.tabela-resultados thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    padding: 13px 12px;
+
+    color: #e0b66f;
+    background: #25221e;
+
+    border: 1px solid #493a28;
+
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tabela-resultados tbody td {
+    padding: 12px;
+
+    color: #eeeeee;
+    background: #111317;
+
+    border: 1px solid #30343c;
+}
+
+.tabela-resultados tbody tr:nth-child(even) td {
+    background: #191b20;
+}
+
+.tabela-resultados tbody tr:hover td {
+    background: #29241d;
+}
+
+
+/* ========================================
+   BARRA DE ROLAGEM DA TABELA
+======================================== */
+
+.tabela-resultados-container::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+.tabela-resultados-container::-webkit-scrollbar-track {
+    background: #111317;
+}
+
+.tabela-resultados-container::-webkit-scrollbar-thumb {
+    background: #51432f;
+    border-radius: 10px;
+}
+
+.tabela-resultados-container::-webkit-scrollbar-thumb:hover {
+    background: #80643d;
+}
+
+
+/* ========================================
+   RESPONSIVIDADE DAS ABAS
+======================================== */
+
+@media (max-width: 650px) {
+
+    .abas-resultados {
+        gap: 17px;
+    }
+
+    .aba-resultado {
+        font-size: 12px;
+    }
+
+    .tabela-resultados-container {
+        max-height: 400px;
+    }
+}
+

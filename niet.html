@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="imagens/cerebro_1-removebg-preview.png">
+
+    <title>Nietzsche | Comparação de Planilhas</title>
+</head>
+
+<body>
+
+    <!-- CABEÇALHO E PROGRESSO DO ROBÔ -->
+    <header class="niet">
+        
+        <div class="cerebro">
+            <img
+                src="imagens/cerebro_1-removebg-preview.png"
+                alt="Cérebro anatômico"
+            >
+        </div>
+
+        <div class="progresso">
+            <h2>Pensamento crítico</h2>
+
+            <p id="etapa-atual">Aguardando início...</p>
+
+            <div class="barra-progresso">
+                <div id="barra-preenchida"></div>
+            </div>
+
+            <p id="porcentagem">0% concluído</p>
+        </div>
+
+        <div class="niet-info">
+            <img
+                src="imagens/Nietzsche-removebg-preview.png"
+                alt="Friedrich Nietzsche"
+            >
+            <h1>Nietzsche</h1>
+        </div>
+
+    </header>
+
+
+    <!-- NAVEGAÇÃO -->
+    <nav class="acoes-painel">
+
+        <a href="index.html" class="btn-voltar">
+            ← Tela inicial
+        </a>
+
+        <button
+            type="button"
+            id="btn-parar"
+            class="btn-parar"
+        >
+            ■ Parar robô
+        </button>
+
+    </nav>
+
+
+    <!-- CONFIGURAÇÃO DA COMPARAÇÃO -->
+    <main>
+
+        <section class="painel-configuracao">
+
+            <!-- SELEÇÃO DAS PLANILHAS -->
+            <div class="painel-arquivos">
+
+                <h2>Planilhas</h2>
+
+                <div class="arquivos">
+
+                    <div class="arquivo">
+                        <label for="arquivo-programacao">
+                            Planilha de Alta Demanda
+                        </label>
+
+                        <input
+                            type="file"
+                            id="arquivo-programacao"
+                            accept=".xlsx,.xls"
+                        >
+                    </div>
+
+                    <div class="arquivo">
+                        <label for="arquivo-otimizacao">
+                            Planilha de Otimização
+                        </label>
+
+                        <input
+                            type="file"
+                            id="arquivo-otimizacao"
+                            accept=".xlsx,.xls"
+                        >
+                    </div>
+
+                </div>
+
+                <div class="area-iniciar">
+
+                    <button
+                        type="button"
+                        id="btn-iniciar"
+                    >
+                        ▶ Iniciar comparação
+                    </button>
+
+                    <p id="status-comparacao">
+                        Aguardando envio das planilhas...
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- VIGÊNCIA -->
+            <div class="painel-vigencia">
+
+                <h2>Vigência</h2>
+
+                <div class="linha-vigencia">
+
+                    <div class="campo-vigencia">
+                        <label for="data-inicio">Início</label>
+
+                        <input
+                            type="date"
+                            id="data-inicio"
+                        >
+                    </div>
+
+                    <div class="campo-vigencia">
+                        <label for="data-fim">Fim</label>
+
+                        <input
+                            type="date"
+                            id="data-fim"
+                        >
+                    </div>
+
+                    <div class="campo-vigencia">
+                        <label for="semanas">Semanas</label>
+
+                        <input
+                            type="number"
+                            id="semanas"
+                            min="1"
+                            max="4"
+                            value="1"
+                        >
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="btn-vigencia"
+                >
+                    Confirmar datas
+                </button>
+
+                <p id="status-vigencia">
+                    Vigência não selecionada.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- RESULTADOS DA COMPARAÇÃO -->
+        <section
+            id="resultados-comparacao"
+            class="painel-resultados"
+        >
+
+            <div class="titulo-resultados">
+                <h2>Resultado da comparação</h2>
+            </div>
+
+            <!-- OS INDICADORES E AS TABELAS
+                 SERÃO INSERIDOS PELO JAVASCRIPT -->
+
+            <p class="mensagem-inicial">
+                Os resultados aparecerão aqui após a comparação.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="js/nietzsche.js"></script>
+
+</body>
+</html>
