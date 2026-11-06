@@ -858,4 +858,69 @@ header.niet {
         max-height: 400px;
     }
 }
+/* ===== RESULTADOS: GRAFITE DISCRETO ===== */
 
+#resultados-comparacao {
+    background: #151619 !important;
+    color: #eeeeee !important;
+    border-color: #414141 !important;
+}
+
+/* Cartões */
+#resultados-comparacao .resultado-card,
+#resultados-comparacao [class*="indicador"] {
+    background: #222326 !important;
+    border: 1px solid #414247 !important;
+    box-shadow: none !important;
+    color: #eeeeee !important;
+}
+
+/* Números */
+#resultados-comparacao .resultado-card strong,
+#resultados-comparacao [class*="indicador"] strong {
+    color: #dfb66f !important;
+}
+
+/* Abas */
+#resultados-comparacao .aba-resultado {
+    background: #252629 !important;
+    color: #d0d0d0 !important;
+    border: 1px solid #45464a !important;
+}
+
+#resultados-comparacao .aba-resultado:hover {
+    background: #303135 !important;
+    color: #ffffff !important;
+}
+
+#resultados-comparacao .aba-resultado.ativa {
+    background: #36373a !important;
+    color: #e5b96b !important;
+    border-color: #68615a !important;
+}
+
+/* Tabela */
+#resultados-comparacao .tabela-resultados-container {
+    background: #171819 !important;
+    border-color: #414141 !important;
+}
+
+#resultados-comparacao .tabela-resultados thead th {
+    background: #303134 !important;
+    color: #e5b96b !important;
+    border-color: #48494c !important;
+}
+
+#resultados-comparacao .tabela-resultados tbody td {
+    background: #1b1c1e !important;
+    color: #eeeeee !important;
+    border-color: #36373a !important;
+}
+
+#resultados-comparacao .tabela-resultados tbody tr:nth-child(even) td {
+    background: #242528 !important;
+}
+
+#resultados-comparacao .tabela-resultados tbody tr:hover td {
+    background: #303135 !important;
+}

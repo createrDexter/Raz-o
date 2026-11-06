@@ -1,250 +1,358 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openpyxl import load_workbook
 from io import BytesIO
+from datetime import datetime, date, time
 import re
 
 app = Flask(__name__)
 CORS(app)
 
 
+# ========================================
+# NORMALIZAÇÃO DOS SERVIÇOS
+# ========================================
+
 def normalizar_servico(valor):
-    """Padroniza o número do serviço para permitir a comparação."""
     if valor is None:
         return None
 
     texto = str(valor).strip()
 
-    if not texto:
-        return None
-
-    # Corrige números que o Excel entrega como 40205.0
-    if re.fullmatch(r"\d+\.0", texto):
+    if texto.endswith(".0"):
         texto = texto[:-2]
 
-    return texto
+    if texto.isdigit():
+        return texto
 
-
-def adicionar_servico(base, valor, linha, coluna):
-    """Registra um serviço e a localização em que ele aparece."""
-    servico = normalizar_servico(valor)
-
-    if not servico:
-        return
-
-    if servico not in base:
-        base[servico] = []
-
-    base[servico].append({
-        "linha": linha,
-        "coluna": coluna
-    })
+    return None
 
 
 def separar_servicos(valor):
-    """Separa serviços que estejam juntos, como 40205/40206."""
     if valor is None:
         return []
 
-    texto = str(valor).strip()
+    partes = re.split(r"[/;,]", str(valor))
+    resultado = []
 
-    if not texto:
-        return []
+    for parte in partes:
+        servico = normalizar_servico(parte)
 
-    partes = re.split(r"\s*/\s*", texto)
+        if servico and servico not in resultado:
+            resultado.append(servico)
 
-    return [
-        normalizar_servico(parte)
-        for parte in partes
-        if normalizar_servico(parte)
-    ]
+    return resultado
 
+
+def valor_json(valor):
+    if isinstance(valor, (datetime, date, time)):
+        return valor.isoformat()
+
+    return valor
+
+
+def ordenar_servicos(servicos):
+    return sorted(servicos, key=lambda x: int(x) if x.isdigit() else x)
+
+
+# ========================================
+# LEITURA DA ALTA DEMANDA
+# ========================================
+
+
+def ler_demanda(arquivo):
+    wb = load_workbook(
+        BytesIO(arquivo.read()),
+        data_only=True,
+        read_only=True
+    )
+
+    if "Demanda" not in wb.sheetnames:
+        raise ValueError("A aba 'Demanda' não foi encontrada.")
+
+    ws = wb["Demanda"]
+
+    todos_servicos = set()
+    registros_ho = {}
+    total_registros = 0
+
+    for linha, dados in enumerate(
+        ws.iter_rows(min_row=16, values_only=True),
+        start=16
+    ):
+        servico_original = dados[3] if len(dados) > 3 else None
+        origem = dados[8] if len(dados) > 8 else None
+        destino = dados[10] if len(dados) > 10 else None
+        tipo = dados[16] if len(dados) > 16 else None
+        frota = dados[17] if len(dados) > 17 else None
+
+        if servico_original is None or not str(servico_original).strip():
+            continue
+
+                # Conta todas as linhas, inclusive MNT_R
+        total_registros += 1
+
+        # Na Otimização, considera somente o código antes da barra (/)
+        servico_principal = str(servico_original).split("/", 1)[0].strip()
+        servicos = separar_servicos(servico_principal)
+
+        # Total geral: códigos numéricos e não numéricos
+        todos_servicos.add(str(servico_original).strip())
+
+        # Comparação somente HO
+        tipo_normalizado = str(tipo or "").strip().upper()
+
+        if tipo_normalizado != "HO":
+            continue
+
+        for servico in servicos:
+            registro = {
+                "servico": servico,
+                "tipo": tipo_normalizado,
+                "origem": valor_json(origem),
+                "destino": valor_json(destino),
+                "frota": valor_json(frota),
+                "linha": linha,
+                "coluna": "B",
+                "situacao": "ENCONTRADO"
+            }
+
+            registros_ho.setdefault(servico, []).append(registro)
+
+    wb.close()
+
+    return {
+        "todos_servicos": todos_servicos,
+        "registros_ho": registros_ho,
+        "total_registros": total_registros
+    }
+# ========================================
+# LEITURA DA OTIMIZAÇÃO
+# ========================================
+
+
+def ler_otimizacao(arquivo):
+    wb = load_workbook(
+        BytesIO(arquivo.read()),
+        data_only=True,
+        read_only=True
+    )
+
+    if "Cenario" not in wb.sheetnames:
+        raise ValueError("A aba 'Cenario' não foi encontrada.")
+
+    ws = wb["Cenario"]
+
+    todos_servicos = set()
+    registros_ho = {}
+    total_registros = 0
+
+    for linha, dados in enumerate(
+        ws.iter_rows(min_row=3, values_only=True),
+        start=3
+    ):
+        servico_original = dados[1] if len(dados) > 1 else None
+        frota = dados[3] if len(dados) > 3 else None
+        tipo = dados[5] if len(dados) > 5 else None
+        origem = dados[16] if len(dados) > 16 else None
+        destino = dados[17] if len(dados) > 17 else None
+
+        if servico_original is None or not str(servico_original).strip():
+            continue
+
+        # Conta todas as linhas, inclusive MNT_R
+        total_registros += 1
+
+        # Considera exclusivamente o código antes da barra (/)
+        servico_principal = str(servico_original).split("/", 1)[0].strip()
+
+        servicos = separar_servicos(servico_principal)
+
+        # Total geral: considera somente o serviço principal
+        todos_servicos.add(servico_principal)
+        # Comparação somente HO
+        tipo_normalizado = str(tipo or "").strip().upper()
+
+        if tipo_normalizado != "HO":
+            continue
+
+        for servico in servicos:
+            registro = {
+                "servico": servico,
+                "tipo": tipo_normalizado,
+                "origem": valor_json(origem),
+                "destino": valor_json(destino),
+                "frota": valor_json(frota),
+                "linha": linha,
+                "coluna": "B",
+                "situacao": "ENCONTRADO"
+            }
+
+            registros_ho.setdefault(servico, []).append(registro)
+
+    wb.close()
+
+    return {
+        "todos_servicos": todos_servicos,
+        "registros_ho": registros_ho,
+        "total_registros": total_registros
+    }
+# ========================================
+# STATUS DA API
+# ========================================
 
 @app.route("/api/status", methods=["GET"])
 def status():
     return jsonify({
-        "mensagem": "Robô Nietzsche está funcionando!"
+        "status": "online",
+        "mensagem": "Robô Nietzsche funcionando."
     })
 
+
+# ========================================
+# COMPARAÇÃO
+# ========================================
 
 @app.route("/api/comparar", methods=["POST"])
 def comparar():
 
-    programacao = request.files.get("programacao")
-    otimizacao = request.files.get("otimizacao")
-
-    if not programacao or not otimizacao:
-        return jsonify({
-            "erro": "Envie as duas planilhas."
-        }), 400
-
     try:
-        planilha_programacao = load_workbook(
-            BytesIO(programacao.read()),
-            data_only=True
+        if "programacao" not in request.files:
+            return jsonify({
+                "erro": "Arquivo de Alta Demanda não enviado."
+            }), 400
+
+        if "otimizacao" not in request.files:
+            return jsonify({
+                "erro": "Arquivo de Otimização não enviado."
+            }), 400
+
+        arquivo_demanda = request.files["programacao"]
+        arquivo_otimizacao = request.files["otimizacao"]
+
+        demanda = ler_demanda(arquivo_demanda)
+        otimizacao = ler_otimizacao(arquivo_otimizacao)
+
+        demanda_ho = demanda["registros_ho"]
+        otimizacao_ho = otimizacao["registros_ho"]
+
+        servicos_demanda = set(demanda_ho.keys())
+        servicos_otimizacao = set(otimizacao_ho.keys())
+
+        correspondentes_ids = (
+            servicos_demanda & servicos_otimizacao
         )
 
-        planilha_otimizacao = load_workbook(
-            BytesIO(otimizacao.read()),
-            data_only=True
+        ausentes_otimizacao_ids = (
+            servicos_demanda - servicos_otimizacao
         )
 
-        # Conferir se as abas necessárias existem
-        if "Demanda" not in planilha_programacao.sheetnames:
-            raise ValueError(
-                "A aba 'Demanda' não foi encontrada na Alta Demanda."
-            )
+        ausentes_demanda_ids = (
+            servicos_otimizacao - servicos_demanda
+        )
 
-        if "Cenario" not in planilha_otimizacao.sheetnames:
-            raise ValueError(
-                "A aba 'Cenario' não foi encontrada na Otimização."
-            )
+        # ========================================
+        # CORRESPONDENTES
+        # ========================================
 
-        aba_demanda = planilha_programacao["Demanda"]
-        aba_cenario = planilha_otimizacao["Cenario"]
+        correspondentes = []
 
-        # Dicionários com os serviços e suas localizações
-        servicos_demanda = {}
-        servicos_otimizacao = {}
+        for servico in ordenar_servicos(correspondentes_ids):
 
-        # ---------------------------------
-        # LER ALTA DEMANDA
-        # Q = TIPO
-        # D = SERVIÇO 1
-        # E = SERVIÇO 2
-        # ---------------------------------
+            correspondentes.append({
+                "servico": servico,
+                "situacao": "ENCONTRADO",
+                "linhas_demanda": demanda_ho[servico],
+                "linhas_otimizacao": otimizacao_ho[servico],
+                "tipo_demanda": "HO",
+                "tipos_otimizacao": ["HO"]
+            })
 
-        for linha in range(3, aba_demanda.max_row + 1):
+        # ========================================
+        # AUSENTES NA OTIMIZAÇÃO
+        # ========================================
 
-            tipo = aba_demanda.cell(
-                row=linha,
-                column=17
-            ).value
+        ausentes_otimizacao = []
 
-            if str(tipo).strip().upper() != "HO":
+        for servico in ordenar_servicos(ausentes_otimizacao_ids):
+            for registro in demanda_ho[servico]:
+
+                item = registro.copy()
+                item["situacao"] = "AUSENTE NA OTIMIZAÇÃO"
+
+                ausentes_otimizacao.append(item)
+
+                # ========================================
+        # AUSENTES NA ALTA DEMANDA
+        # AGRUPADOS POR SERVIÇO
+        # ========================================
+
+        ausentes_demanda = []
+
+        for servico in ordenar_servicos(ausentes_demanda_ids):
+
+            registros = otimizacao_ho[servico]
+
+            if not registros:
                 continue
 
-            servico_1 = aba_demanda.cell(
-                row=linha,
-                column=4
-            ).value
+            # Primeira e última ocorrência do serviço
+            primeiro = registros[0]
+            ultimo = registros[-1]
 
-            servico_2 = aba_demanda.cell(
-                row=linha,
-                column=5
-            ).value
+            item = primeiro.copy()
 
-            adicionar_servico(
-                servicos_demanda,
-                servico_1,
-                linha,
-                "D"
+            # Monta o trajeto completo
+            item["origem"] = primeiro["origem"]
+            item["destino"] = ultimo["destino"]
+
+            # Mostra o intervalo das linhas na Otimização
+            item["linha"] = (
+                f'{primeiro["linha"]}–{ultimo["linha"]}'
             )
 
-            adicionar_servico(
-                servicos_demanda,
-                servico_2,
-                linha,
-                "E"
-            )
+            item["situacao"] = "AUSENTE NA ALTA DEMANDA"
 
-        # ---------------------------------
-        # LER OTIMIZAÇÃO
-        # B = SERVIÇO
-        # F = TIPO
-        # ---------------------------------
+            ausentes_demanda.append(item)
 
-        for linha in range(3, aba_cenario.max_row + 1):
+        # ========================================
+        # RESUMO
+        # ========================================
 
-            tipo = aba_cenario.cell(
-                row=linha,
-                column=6
-            ).value
+        resumo = {
+            # Totais gerais: todos os tipos
+            "total_demanda": len(demanda["todos_servicos"]),
+            "total_otimizacao": len(otimizacao["todos_servicos"]),
 
-            if str(tipo).strip().upper() not in ["HO", "EHO"]:
-                continue
+            # Totais de registros nas planilhas
+            "total_registros_demanda": demanda["total_registros"],
+            "total_registros_otimizacao": otimizacao["total_registros"],
 
-            valor_servico = aba_cenario.cell(
-                row=linha,
-                column=2
-            ).value
-
-            for servico in separar_servicos(valor_servico):
-
-                adicionar_servico(
-                    servicos_otimizacao,
-                    servico,
-                    linha,
-                    "B"
-                )
-
-        # ---------------------------------
-        # COMPARAR AS DUAS PLANILHAS
-        # ---------------------------------
-
-        conjunto_demanda = set(servicos_demanda.keys())
-        conjunto_otimizacao = set(servicos_otimizacao.keys())
-
-        correspondentes = conjunto_demanda & conjunto_otimizacao
-
-        ausentes_otimizacao = (
-            conjunto_demanda - conjunto_otimizacao
-        )
-
-        ausentes_demanda = (
-            conjunto_otimizacao - conjunto_demanda
-        )
-
-        # Organizar os resultados para o site
-        resultado_correspondentes = []
-
-        for servico in sorted(correspondentes):
-            resultado_correspondentes.append({
-                "servico": servico,
-                "linhas_demanda": servicos_demanda[servico],
-                "linhas_otimizacao": servicos_otimizacao[servico]
-            })
-
-        resultado_ausentes_otimizacao = []
-
-        for servico in sorted(ausentes_otimizacao):
-            resultado_ausentes_otimizacao.append({
-                "servico": servico,
-                "linhas": servicos_demanda[servico]
-            })
-
-        resultado_ausentes_demanda = []
-
-        for servico in sorted(ausentes_demanda):
-            resultado_ausentes_demanda.append({
-                "servico": servico,
-                "linhas": servicos_otimizacao[servico]
-            })
+            # Comparação: somente HO
+            "total_ho_demanda": len(servicos_demanda),
+            "total_ho_otimizacao": len(servicos_otimizacao),
+            "correspondentes": len(correspondentes_ids),
+            "ausentes_otimizacao": len(ausentes_otimizacao_ids),
+            "ausentes_demanda": len(ausentes_demanda_ids)
+        }
 
         return jsonify({
-            "mensagem": "Comparação concluída com sucesso!",
-
-            "resumo": {
-                "total_demanda": len(conjunto_demanda),
-                "total_otimizacao": len(conjunto_otimizacao),
-                "correspondentes": len(correspondentes),
-                "ausentes_otimizacao": len(ausentes_otimizacao),
-                "ausentes_demanda": len(ausentes_demanda)
-            },
-
-            "correspondentes": resultado_correspondentes,
-
-            "ausentes_otimizacao": resultado_ausentes_otimizacao,
-
-            "ausentes_demanda": resultado_ausentes_demanda
+            "mensagem": "Comparação realizada com sucesso.",
+            "resumo": resumo,
+            "correspondentes": correspondentes,
+            "ausentes_otimizacao": ausentes_otimizacao,
+            "ausentes_demanda": ausentes_demanda
         })
 
     except Exception as erro:
         return jsonify({
-            "erro": f"Não foi possível comparar as planilhas: {erro}"
-        }), 400
+            "erro": str(erro)
+        }), 500
 
+
+# ========================================
+# INICIAR SERVIDOR
+# ========================================
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

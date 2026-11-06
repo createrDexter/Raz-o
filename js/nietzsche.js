@@ -12,21 +12,140 @@ const semanas = document.getElementById("semanas");
 
 const statusVigencia = document.getElementById("status-vigencia");
 const statusComparacao = document.getElementById("status-comparacao");
+const areaResultados = document.getElementById("resultados-comparacao");
 
 let requisicaoAtual = null;
 let vigenciaConfirmada = false;
 let dadosVigencia = null;
 
-// Cria a área de resultados automaticamente
-let areaResultados = document.getElementById("resultados-comparacao");
 
-if (!areaResultados) {
-    areaResultados = document.createElement("section");
-    areaResultados.id = "resultados-comparacao";
-    statusComparacao.insertAdjacentElement("afterend", areaResultados);
+// ========================================
+// ESTILOS
+// ========================================
+
+function adicionarEstilos() {
+    if (document.getElementById("estilos-nietzsche")) return;
+
+    const estilo = document.createElement("style");
+    estilo.id = "estilos-nietzsche";
+
+    estilo.textContent = `
+        .resumo-comparacao {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(145px,1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .resultado-card {
+            background: #f4f5f7;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .resultado-card h3 {
+            font-size: 27px;
+            margin: 0 0 8px;
+        }
+
+        .resultado-card p {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .card-ho { border: 2px solid #2879c7; }
+        .card-verde { border: 2px solid #239b56; }
+        .card-vermelho { border: 2px solid #d93025; }
+
+        .tabela-resultados-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .tabela-resultados {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .tabela-resultados th,
+        .tabela-resultados td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .tabela-resultados th {
+            background: #343a40;
+            color: white;
+        }
+
+        .linha-verde { background: #e1f5e8; }
+        .linha-vermelha { background: #fde2e2; }
+
+        .servico-verde {
+            color: #137333;
+            font-weight: bold;
+        }
+
+        .servico-vermelho {
+            color: #c5221f;
+            font-weight: bold;
+        }
+
+        .abas-resultados {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .aba-resultado {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #eee;
+        }
+
+        .aba-resultado.ativa {
+            background: #343a40;
+            color: white;
+        }
+
+        .conteudo-aba { display: none; }
+        .conteudo-aba.ativa { display: block; }
+
+        .resultado-vazio {
+            padding: 15px;
+            background: #f4f4f4;
+            border-radius: 6px;
+        }
+
+        .titulo-secao {
+            margin-top: 25px;
+            font-size: 19px;
+        }
+
+        @media(max-width:600px) {
+            .resumo-comparacao {
+                grid-template-columns: repeat(2,1fr);
+            }
+        }
+    `;
+
+    document.head.appendChild(estilo);
 }
 
-// Evita interpretar conteúdo recebido como HTML
+
+// ========================================
+// SEGURANÇA E FORMATAÇÃO
+// ========================================
+
 function escaparHTML(valor) {
     return String(valor ?? "—")
         .replaceAll("&", "&amp;")
@@ -36,8 +155,16 @@ function escaparHTML(valor) {
         .replaceAll("'", "&#039;");
 }
 
-// Confirma a vigência
-btnVigencia.addEventListener("click", () => {
+function numero(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR");
+}
+
+
+// ========================================
+// VIGÊNCIA
+// ========================================
+
+btnVigencia?.addEventListener("click", () => {
     const inicio = dataInicio.value;
     const fim = dataFim.value;
     const quantidadeSemanas = Number(semanas.value);
@@ -45,7 +172,6 @@ btnVigencia.addEventListener("click", () => {
     if (!inicio || !fim) {
         statusVigencia.textContent = "Selecione as duas datas.";
         vigenciaConfirmada = false;
-        dadosVigencia = null;
         return;
     }
 
@@ -53,7 +179,6 @@ btnVigencia.addEventListener("click", () => {
         statusVigencia.textContent =
             "A data final não pode ser anterior à inicial.";
         vigenciaConfirmada = false;
-        dadosVigencia = null;
         return;
     }
 
@@ -65,7 +190,6 @@ btnVigencia.addEventListener("click", () => {
         statusVigencia.textContent =
             "Informe uma quantidade de 1 a 4 semanas.";
         vigenciaConfirmada = false;
-        dadosVigencia = null;
         return;
     }
 
@@ -81,18 +205,23 @@ btnVigencia.addEventListener("click", () => {
         `Vigência confirmada: ${inicio} até ${fim} (${quantidadeSemanas} semanas).`;
 });
 
-// Exige nova confirmação se algum campo for alterado
-[dataInicio, dataFim, semanas].forEach((campo) => {
-    campo.addEventListener("input", () => {
+[dataInicio, dataFim, semanas].forEach(campo => {
+    campo?.addEventListener("input", () => {
         vigenciaConfirmada = false;
         dadosVigencia = null;
-        statusVigencia.textContent = "Confirme novamente a vigência.";
+
+        statusVigencia.textContent =
+            "Confirme novamente a vigência.";
     });
 });
 
-// Cria tabela reutilizável
+
+// ========================================
+// TABELAS
+// ========================================
+
 function criarTabela(cabecalhos, linhas, mensagem) {
-    if (!linhas || linhas.length === 0) {
+    if (!Array.isArray(linhas) || linhas.length === 0) {
         return `<p class="resultado-vazio">${escaparHTML(mensagem)}</p>`;
     }
 
@@ -101,230 +230,418 @@ function criarTabela(cabecalhos, linhas, mensagem) {
             <table class="tabela-resultados">
                 <thead>
                     <tr>
-                        ${cabecalhos.map(titulo => `
-                            <th>${escaparHTML(titulo)}</th>
-                        `).join("")}
+                        ${cabecalhos.map(c =>
+                            `<th>${escaparHTML(c)}</th>`
+                        ).join("")}
                     </tr>
                 </thead>
 
                 <tbody>
                     ${linhas.map(linha => `
-                        <tr>
-                            ${linha.map(valor => `
-                                <td>${escaparHTML(valor)}</td>
+                        <tr class="${escaparHTML(linha.classe || "")}">
+                            ${linha.valores.map((valor, indice) => `
+                                <td class="${
+                                    indice === 0
+                                    ? escaparHTML(linha.classeServico || "")
+                                    : ""
+                                }">
+                                    ${escaparHTML(valor)}
+                                </td>
                             `).join("")}
                         </tr>
                     `).join("")}
                 </tbody>
             </table>
         </div>
+
+        <p>Quantidade de registros: ${numero(linhas.length)}</p>
     `;
 }
 
-// Mostra os resultados recebidos do Python
-function mostrarResultados(resultado) {
-    const resumo = resultado.resumo || {};
+
+// ========================================
+// CONVERTER REGISTROS EM LINHAS
+// ========================================
+
+function registroParaLinha(registro, classe = "") {
+    return {
+        classe,
+        classeServico: classe === "linha-verde"
+            ? "servico-verde"
+            : "servico-vermelho",
+
+        valores: [
+            registro.servico,
+            registro.tipo,
+            registro.origem,
+            registro.destino,
+            registro.frota,
+            registro.linha,
+            registro.coluna,
+            registro.situacao
+        ]
+    };
+}
+
+
+// ========================================
+// CORRESPONDENTES HO
+// ========================================
+
+// ========================================
+// CORRESPONDENTES HO
+// ========================================
+
+function montarCorrespondentes(lista) {
+    const linhas = [];
+
+    function possuiLetras(valor) {
+        return /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(
+            String(valor ?? "").trim()
+        );
+    }
+
+    (lista || []).forEach(item => {
+        const demanda = item.linhas_demanda || [];
+        const otimizacao = item.linhas_otimizacao || [];
+
+        const quantidade = Math.max(
+            demanda.length,
+            otimizacao.length
+        );
+
+        for (let i = 0; i < quantidade; i++) {
+            const d = demanda[i] || {};
+            const o = otimizacao[i] || {};
+
+            // Ignora registros sem origem e destino identificados
+            if (
+                !possuiLetras(d.origem) ||
+                !possuiLetras(d.destino) ||
+                !possuiLetras(o.origem) ||
+                !possuiLetras(o.destino)
+            ) {
+                continue;
+            }
+
+            linhas.push({
+                classe: "linha-verde",
+                classeServico: "servico-verde",
+
+                valores: [
+                    item.servico,
+                    d.tipo || item.tipo_demanda || "HO",
+                    d.origem,
+                    d.destino,
+                    d.frota ?? "—",
+                    d.linha ?? "—",
+                    o.origem,
+                    o.destino,
+                    o.frota ?? "—",
+                    o.linha ?? "—",
+                    "CORRESPONDENTE"
+                ]
+            });
+        }
+    });
+
+    return linhas;
+}
+
+
+// ========================================
+// AUSENTES NA OTIMIZAÇÃO
+// ========================================
+
+function montarAusentesOtimizacao(lista) {
+console.log("NIETZSCHE NOVO CARREGADO!");
+    return (lista || []).map(registro => ({
+        classe: "linha-vermelha",
+        classeServico: "servico-vermelho",
+
+        valores: [
+            registro.servico,
+            registro.tipo,
+            registro.origem,
+            registro.destino,
+            registro.frota,
+            registro.linha,
+            registro.coluna,
+            registro.situacao
+        ]
+    }));
+}
+
+
+// ========================================
+// AUSENTES NA ALTA DEMANDA
+// ========================================
+
+function montarAusentesDemanda(lista) {
+    return (lista || []).map(registro => ({
+        classe: "linha-vermelha",
+        classeServico: "servico-vermelho",
+
+        valores: [
+            registro.servico,
+            registro.tipo,
+            registro.origem,
+            registro.destino,
+            registro.frota,
+            registro.linha,
+            registro.coluna,
+            registro.situacao
+        ]
+    }));
+}
+
+
+// ========================================
+// RESUMO
+// ========================================
+
+function montarResumo(resumo) {
+    const cartoes = [
+        {
+            valor: resumo.total_ho_demanda,
+            titulo: "HO na Alta Demanda",
+            classe: "card-ho"
+        },
+        {
+            valor: resumo.total_ho_otimizacao,
+            titulo: "HO na Otimização",
+            classe: "card-ho"
+        },
+        {
+            valor: resumo.correspondentes,
+            titulo: "Correspondentes HO",
+            classe: "card-verde"
+        },
+        {
+            valor: resumo.ausentes_otimizacao,
+            titulo: "Ausentes na Otimização",
+            classe: "card-vermelho"
+        },
+        {
+            valor: resumo.ausentes_demanda,
+            titulo: "Ausentes na Alta Demanda",
+            classe: "card-vermelho"
+        }
+    ];
+
+    return `
+        <div class="resumo-comparacao">
+            ${cartoes.map(cartao => `
+                <div class="resultado-card ${cartao.classe}">
+                    <h3>${numero(cartao.valor)}</h3>
+                    <p>${escaparHTML(cartao.titulo)}</p>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+// ========================================
+// ABAS
+// ========================================
+
+function ativarAba(nome) {
+    document.querySelectorAll(".aba-resultado").forEach(botao => {
+        botao.classList.toggle(
+            "ativa",
+            botao.dataset.aba === nome
+        );
+    });
+
+    document.querySelectorAll(".conteudo-aba").forEach(conteudo => {
+        conteudo.classList.toggle(
+            "ativa",
+            conteudo.id === `aba-${nome}`
+        );
+    });
+}
+
+
+// ========================================
+// EXIBIR RESULTADOS
+// ========================================
+
+function mostrarResultados(dados) {
+    adicionarEstilos();
+
+    if (!dados || !dados.resumo) {
+        throw new Error("O servidor não retornou o resumo da comparação.");
+    }
+
+    const resumo = dados.resumo;
+
+    const correspondentes = montarCorrespondentes(
+        dados.correspondentes
+    );
+
+    const ausentesOtimizacao = montarAusentesOtimizacao(
+        dados.ausentes_otimizacao
+    );
+
+    const ausentesDemanda = montarAusentesDemanda(
+        dados.ausentes_demanda
+    );
 
     areaResultados.innerHTML = `
-        <section class="painel-resultados">
+        <h2>Resultado da comparação</h2>
 
-            <h2>Resultado da comparação</h2>
+        ${montarResumo(resumo)}
 
-            <div class="resumo-comparacao">
+        <div class="abas-resultados" role="tablist">
+            <button type="button" class="aba-resultado ativa"
+                data-aba="correspondentes">
+                Correspondentes HO (${numero(resumo.correspondentes)})
+            </button>
 
-                <div class="resultado-card">
-                    <h3>${escaparHTML(resumo.total_demanda ?? 0)}</h3>
-                    <p>Serviços na Alta Demanda</p>
-                </div>
+            <button type="button" class="aba-resultado"
+                data-aba="ausentes-otimizacao">
+                Ausentes na Otimização (${numero(resumo.ausentes_otimizacao)})
+            </button>
 
-                <div class="resultado-card">
-                    <h3>${escaparHTML(resumo.total_otimizacao ?? 0)}</h3>
-                    <p>Serviços na Otimização</p>
-                </div>
+            <button type="button" class="aba-resultado"
+                data-aba="ausentes-demanda">
+                Ausentes na Alta Demanda (${numero(resumo.ausentes_demanda)})
+            </button>
 
-                <div class="resultado-card">
-                    <h3>${escaparHTML(resumo.correspondentes ?? 0)}</h3>
-                    <p>Correspondentes</p>
-                </div>
+            <button type="button" class="aba-resultado"
+                data-aba="previas">
+                Prévia das planilhas
+            </button>
+        </div>
 
-                <div class="resultado-card">
-                    <h3>${escaparHTML(resumo.ausentes_otimizacao ?? 0)}</h3>
-                    <p>Ausentes na Otimização</p>
-                </div>
+        <section id="aba-correspondentes" class="conteudo-aba ativa">
+            <h3 class="titulo-secao">Serviços HO correspondentes</h3>
 
-                <div class="resultado-card">
-                    <h3>${escaparHTML(resumo.ausentes_demanda ?? 0)}</h3>
-                    <p>Ausentes na Alta Demanda</p>
-                </div>
+            ${criarTabela(
+                [
+                    "Serviço",
+                    "Tipo",
+                    "Origem - Alta Demanda",
+                    "Destino - Alta Demanda",
+                    "Frota - Alta Demanda",
+                    "Linha - Alta Demanda",
+                    "Origem - Otimização",
+                    "Destino - Otimização",
+                    "Frota - Otimização",
+                    "Linha - Otimização",
+                    "Situação"
+                ],
+                correspondentes,
+                "Nenhum serviço correspondente."
+            )}
+        </section>
 
-            </div>
+        <section id="aba-ausentes-otimizacao" class="conteudo-aba">
+            <h3 class="titulo-secao">Serviços HO ausentes na Otimização</h3>
 
-            <nav class="abas-resultados" role="tablist">
+            ${criarTabela(
+                [
+                    "Serviço",
+                    "Tipo",
+                    "Origem",
+                    "Destino",
+                    "Frota",
+                    "Linha na Alta Demanda",
+                    "Coluna",
+                    "Situação"
+                ],
+                ausentesOtimizacao,
+                "Nenhum serviço ausente na Otimização."
+            )}
+        </section>
 
-                <button class="aba-resultado ativa"
-                    data-aba="correspondentes"
-                    role="tab"
-                    aria-selected="true">
-                    Correspondentes
-                </button>
+        <section id="aba-ausentes-demanda" class="conteudo-aba">
+            <h3 class="titulo-secao">Serviços HO ausentes na Alta Demanda</h3>
 
-                <button class="aba-resultado"
-                    data-aba="ausentes-otimizacao"
-                    role="tab"
-                    aria-selected="false">
-                    Ausentes na Otimização
-                </button>
+            ${criarTabela(
+                [
+                    "Serviço",
+                    "Tipo",
+                    "Origem",
+                    "Destino",
+                    "Frota",
+                    "Linha na Otimização",
+                    "Coluna",
+                    "Situação"
+                ],
+                ausentesDemanda,
+                "Nenhum serviço ausente na Alta Demanda."
+            )}
+        </section>
 
-                <button class="aba-resultado"
-                    data-aba="ausentes-demanda"
-                    role="tab"
-                    aria-selected="false">
-                    Ausentes na Alta Demanda
-                </button>
+        <section id="aba-previas" class="conteudo-aba">
+            <h3 class="titulo-secao">Prévia da Alta Demanda</h3>
 
-                <button class="aba-resultado"
-                    data-aba="previa"
-                    role="tab"
-                    aria-selected="false">
-                    Prévia das planilhas
-                </button>
+            ${
+                Array.isArray(dados.previa_demanda)
+                ? criarTabela(
+                    ["Linha", "Serviço", "Origem", "Destino", "Tipo", "Frota"],
+                    dados.previa_demanda.map(r => ({
+                        valores: [
+                            r.linha, r.servico, r.origem,
+                            r.destino, r.tipo, r.frota
+                        ]
+                    })),
+                    "Sem dados de prévia."
+                )
+                : `<p class="resultado-vazio">
+                    A prévia ainda não foi enviada pelo Python.
+                    A comparação e as tabelas acima utilizam os dados retornados pelo servidor.
+                  </p>`
+            }
 
-            </nav>
+            <h3 class="titulo-secao">Prévia da Otimização</h3>
 
-            <div id="conteudo-abas-resultados" role="tabpanel"></div>
-
+            ${
+                Array.isArray(dados.previa_otimizacao)
+                ? criarTabela(
+                    ["Linha", "Serviço", "Origem", "Destino", "Tipo", "Frota"],
+                    dados.previa_otimizacao.map(r => ({
+                        valores: [
+                            r.linha, r.servico, r.origem,
+                            r.destino, r.tipo, r.frota
+                        ]
+                    })),
+                    "Sem dados de prévia."
+                )
+                : `<p class="resultado-vazio">
+                    A prévia ainda não foi enviada pelo Python.
+                  </p>`
+            }
         </section>
     `;
 
-    const botoes = areaResultados.querySelectorAll(".aba-resultado");
-
-    const conteudo = areaResultados.querySelector(
-        "#conteudo-abas-resultados"
-    );
-
-    // Controla a troca entre as abas
-    function abrirAba(nome) {
-
-        botoes.forEach(botao => {
-            const ativa = botao.dataset.aba === nome;
-
-            botao.classList.toggle("ativa", ativa);
-            botao.setAttribute("aria-selected", String(ativa));
-        });
-
-        // ABA 1: CORRESPONDENTES
-        if (nome === "correspondentes") {
-
-            const registros = (resultado.correspondentes || [])
-                .flatMap(item => item.registros || []);
-
-            const linhas = registros.map(item => [
-                item.linha,
-                item.servico,
-                item.tipo,
-                item.origem,
-                item.destino
-            ]);
-
-            conteudo.innerHTML = `
-                <h3>Serviços correspondentes</h3>
-
-                <p class="quantidade-resultados">
-                    ${linhas.length} registros encontrados
-                </p>
-
-                ${criarTabela(
-                    ["Linha", "Serviço", "Tipo", "Origem", "Destino"],
-                    linhas,
-                    "Nenhum serviço correspondente encontrado. Confira os registros enviados pelo Python."
-                )}
-            `;
-        }
-
-        // ABA 2: AUSENTES NA OTIMIZAÇÃO
-        else if (nome === "ausentes-otimizacao") {
-
-            const linhas = (resultado.ausentes_otimizacao || [])
-                .map(item => [
-                    item.servico,
-                    formatarLocais(item.linhas)
-                ]);
-
-            conteudo.innerHTML = `
-                <h3>Serviços ausentes na Otimização</h3>
-
-                ${criarTabela(
-                    ["Serviço", "Linhas na Alta Demanda"],
-                    linhas,
-                    "Nenhum serviço ausente na Otimização."
-                )}
-            `;
-        }
-
-        // ABA 3: AUSENTES NA ALTA DEMANDA
-        else if (nome === "ausentes-demanda") {
-
-            const linhas = (resultado.ausentes_demanda || [])
-                .map(item => [
-                    item.servico,
-                    formatarLocais(item.linhas)
-                ]);
-
-            conteudo.innerHTML = `
-                <h3>Serviços ausentes na Alta Demanda</h3>
-
-                ${criarTabela(
-                    ["Serviço", "Linhas na Otimização"],
-                    linhas,
-                    "Nenhum serviço ausente na Alta Demanda."
-                )}
-            `;
-        }
-
-        // ABA 4: PRÉVIA
-        else if (nome === "previa") {
-
-            conteudo.innerHTML = `
-                <h3>Prévia das planilhas</h3>
-
-                <p class="mensagem-previa">
-                    A visualização das planilhas será integrada
-                    nesta aba na próxima etapa.
-                </p>
-            `;
-        }
-    }
-
-    // Eventos dos botões das abas
-    botoes.forEach(botao => {
+    areaResultados.querySelectorAll(".aba-resultado").forEach(botao => {
         botao.addEventListener("click", () => {
-            abrirAba(botao.dataset.aba);
+            ativarAba(botao.dataset.aba);
         });
     });
 
-    // Abre a primeira aba automaticamente
-    abrirAba("correspondentes");
+    areaResultados.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 }
 
-// Formata as linhas e colunas encontradas
-function formatarLocais(locais) {
-    if (!locais || locais.length === 0) {
-        return "Não informado";
-    }
 
-    return locais.map(local =>
-        `Linha ${local.linha}, coluna ${local.coluna}`
-    ).join(" | ");
-}
+// ========================================
+// INICIAR COMPARAÇÃO
+// ========================================
 
-// Inicia a comparação
-btnIniciar.addEventListener("click", async () => {
+btnIniciar?.addEventListener("click", async () => {
+    if (requisicaoAtual) return;
+
     const programacao = arquivoProgramacao.files[0];
     const otimizacao = arquivoOtimizacao.files[0];
 
     if (!programacao || !otimizacao) {
         statusComparacao.textContent =
-            "Selecione as duas planilhas antes de iniciar.";
+            "Selecione os dois arquivos Excel.";
         return;
     }
 
@@ -334,59 +651,87 @@ btnIniciar.addEventListener("click", async () => {
         return;
     }
 
-    const dados = new FormData();
+    const formulario = new FormData();
 
-    dados.append("programacao", programacao);
-    dados.append("otimizacao", otimizacao);
-    dados.append("data_inicio", dadosVigencia.data_inicio);
-    dados.append("data_fim", dadosVigencia.data_fim);
-    dados.append("semanas", dadosVigencia.semanas);
+    formulario.append("programacao", programacao);
+    formulario.append("otimizacao", otimizacao);
+
+    formulario.append("data_inicio", dadosVigencia.data_inicio);
+    formulario.append("data_fim", dadosVigencia.data_fim);
+    formulario.append("semanas", dadosVigencia.semanas);
 
     requisicaoAtual = new AbortController();
 
     btnIniciar.disabled = true;
-    areaResultados.innerHTML = "";
 
-    statusComparacao.textContent = "Comparando as planilhas...";
+    if (btnParar) btnParar.disabled = false;
+
+    statusComparacao.textContent =
+        "Comparando as planilhas. Aguarde...";
+
+    areaResultados.innerHTML = "";
 
     try {
         const resposta = await fetch(
             "http://127.0.0.1:5000/api/comparar",
             {
                 method: "POST",
-                body: dados,
+                body: formulario,
                 signal: requisicaoAtual.signal
             }
         );
 
-        const resultado = await resposta.json();
+        const dados = await resposta.json();
 
         if (!resposta.ok) {
-            throw new Error(resultado.erro || "Erro na comparação.");
+            throw new Error(
+                dados.erro || `Erro HTTP ${resposta.status}`
+            );
         }
 
-        mostrarResultados(resultado);
+        mostrarResultados(dados);
 
         statusComparacao.textContent =
-            resultado.mensagem || "Comparação concluída.";
+            "Comparação realizada com sucesso.";
 
     } catch (erro) {
         if (erro.name === "AbortError") {
-            statusComparacao.textContent = "Operação interrompida.";
+            statusComparacao.textContent =
+                "Comparação interrompida.";
         } else {
-            statusComparacao.textContent = "Erro: " + erro.message;
+            console.error("Erro na comparação:", erro);
+
+            statusComparacao.textContent =
+                "Erro: " + erro.message;
         }
     } finally {
-        btnIniciar.disabled = false;
         requisicaoAtual = null;
+        btnIniciar.disabled = false;
+
+        if (btnParar) btnParar.disabled = true;
     }
 });
 
-// Interrompe a requisição
-btnParar.addEventListener("click", () => {
+
+// ========================================
+// PARAR COMPARAÇÃO
+// ========================================
+
+btnParar?.addEventListener("click", () => {
     if (requisicaoAtual) {
         requisicaoAtual.abort();
     }
-
-    statusComparacao.textContent = "Operação interrompida.";
 });
+
+
+// ========================================
+// INICIALIZAÇÃO
+// ========================================
+
+adicionarEstilos();
+
+if (btnParar) {
+    btnParar.disabled = true;
+}
+
+console.log("TESTE 123 - ARQUIVO NOVO");
