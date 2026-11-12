@@ -924,3 +924,40 @@ header.niet {
 #resultados-comparacao .tabela-resultados tbody tr:hover td {
     background: #303135 !important;
 }
+
+.acoes-servicos {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.acoes-servicos label {
+    color: #e0b66f;
+    font-weight: 600;
+}
+
+.acoes-servicos input {
+    padding: 10px;
+    border: 1px solid #51432f;
+    border-radius: 6px;
+    background: #191b20;
+    color: #eeeeee;
+}
+
+.acoes-servicos button,
+#btn-excluir-servicos {
+    padding: 10px 16px;
+    border: 1px solid #80643d;
+    border-radius: 6px;
+    background: #29241d;
+    color: #e0b66f;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.acoes-servicos button:hover,
+#btn-excluir-servicos:hover {
+    background: #403321;
+}
